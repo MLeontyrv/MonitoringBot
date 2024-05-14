@@ -52,7 +52,7 @@ def find_email_command(update: Update, context):
 
 def find_email(update: Update, context):
     user_input = update.message.text  # Получаем текст
-    email_regex = re.compile(r'[^@\s]+@[^@\s]+\.[^@\s]+')  # Регулярка для email
+    email_regex = re.compile(r'[^@\s]+@[^@\s]+\.[^@\s]+\b')  # Регулярка для email
     email_list = email_regex.findall(user_input)  # Ищем email
 
     if not email_list:  # Обрабатываем случай, когда адресов нет
@@ -95,17 +95,25 @@ def find_phone_number_command(update: Update, context):
 
 def find_phone_number(update: Update, context):
     user_input = update.message.text  # Получаем текст
-    phone_num_regex = re.compile(r'(?:(?:8|\+7)[\- ]?)?(?:\(?\d{3}\)?[\- ]?)?[\d\- ]{7,10}')  # Регулярка для номера
+    # Регулярка для номера
+    phone_num_regex = re.compile(r'(8|\+7)([- ])?(\()?(\d{3})(\))?([ -])?(\d{3})([ -])?(\d{2})([ -])?(\d{2})')
     phone_number_list = phone_num_regex.findall(user_input)  # Ищем номера телефонов
 
     if not phone_number_list:  # Обрабатываем случай, когда номеров телефонов нет
         update.message.reply_text('Телефонные номера не найдены')
         return ConversationHandler.END  # Завершаем выполнение функции
 
-    context.user_data["phones"] = phone_number_list
+    result_list = []
+    for match in phone_number_list:
+        temp_string = ''
+        for group in match:
+            temp_string += group
+        result_list.append(temp_string)
+    context.user_data["phones"] = result_list
+
     phone_numbers = ''  # Создаем строку, в которую будем записывать номера телефонов
-    for i in range(len(phone_number_list)):
-        phone_numbers += f'{i + 1}. {phone_number_list[i]}\n'  # Записываем очередной номер
+    for i in range(len(result_list)):
+        phone_numbers += f'{i + 1}. {result_list[i]}\n'  # Записываем очередной номер
 
     update.message.reply_text(phone_numbers)  # Отправляем сообщение пользователю
     update.message.reply_text("Сохранить запись? (Да/нет)")
